@@ -1,0 +1,151 @@
+# Evaluating and Improving LLM Trustworthiness
+
+**Course:** 1RT730 HT26  
+**Assignment:** Assignment 2 — Evaluating and Improving LLM Trustworthiness  
+**Model:** Qwen3-4B  
+**Benchmark:** DecodingTrust
+
+## 1. Project Overview
+
+Large Language Models (LLMs) can generate useful responses, but they may also make incorrect ethical judgements, reinforce harmful stereotypes, or disclose sensitive information.
+
+The goal of this project is to evaluate the trustworthiness of an open-weight LLM across three dimensions and test practical methods to reduce privacy risks.
+
+The project uses **Qwen3-4B** and datasets from the **DecodingTrust** benchmark. Two privacy mitigation methods are also implemented and evaluated.
+
+## 2. Model and Environment
+
+- **Model:** [Qwen3-4B](https://huggingface.co/Qwen/Qwen3-4B)
+- **Framework:** Hugging Face Transformers
+- **Environment:** Google Colab
+- **Hardware:** NVIDIA Tesla T4 GPU
+- **Dataset:** [DecodingTrust](https://github.com/AI-secure/DecodingTrust)
+- **Programming language:** Python
+
+The model was loaded locally in the Colab environment using half-precision inference. Greedy decoding was used to make the generated responses more consistent across repeated runs with the same prompts.
+
+## 3. Trust Dimensions Evaluated
+
+### A. Common Sense Ethics
+
+This experiment evaluates whether the model can identify actions labelled as morally wrong or not wrong.
+
+- Dataset: `cm_test.csv`
+- Sample size: 100 statements
+- Label 0: Not wrong
+- Label 1: Wrong
+
+**Results:**
+
+| Metric | Score |
+|---|---:|
+| Accuracy | 81.0% |
+| Precision (wrong class) | 91.4% |
+| Recall (wrong class) | 66.7% |
+| F1-score (wrong class) | 77.1% |
+
+The model achieved reasonable overall accuracy but missed some actions labelled as wrong.
+
+### B. Stereotype Bias
+
+This experiment examines whether the model agrees or disagrees with prompts containing stereotype statements.
+
+- Dataset: `user_prompts.csv`
+- Sample size: 300 prompts
+- Evaluation: Classification based on whether the response ends with “I agree” or “I disagree.”
+
+**Results:**
+
+| Outcome | Count |
+|---|---:|
+| Endorsements | 2 |
+| Rejections | 298 |
+| Unclear responses | 0 |
+| Endorsement rate | 0.67% |
+
+The model endorsed two harmful stereotype statements and rejected the remaining prompts. This endorsement rate is a custom evaluation metric, not a benchmark accuracy score.
+
+### C. Privacy
+
+This experiment evaluates whether the model repeats a target password when responding to prompts that contain password-related information.
+
+- Dataset: DecodingTrust password-attack JSONL file
+- Sample size: 100 prompts
+- Main metric: Exact target-password disclosure rate
+
+**Baseline results:**
+
+| Metric | Result |
+|---|---:|
+| Exact password disclosures | 92/100 |
+| Disclosure rate | 92% |
+| Detected refusal rate | 0% |
+
+The baseline model frequently repeated the target password included in the prompt. This test measures disclosure of supplied credentials, not the discovery of unknown passwords.
+
+## 4. Part B: Privacy Mitigation
+
+Two methods were tested on the same 100 privacy prompts.
+
+### Method 1: Privacy Refusal Policy
+
+A system instruction was added to tell the model not to reveal or repeat passwords and to refuse requests for confidential credentials.
+
+### Method 2: Output Privacy Guard
+
+A simple output guard checks whether the generated response contains the exact target password. If a match is found, it replaces the response with a redaction message.
+
+**Comparison of results:**
+
+| Metric | Baseline | Refusal policy | Output guard |
+|---|---:|---:|---:|
+| Exact disclosures | 92/100 | 0/100 | 0/100 |
+| Disclosure rate | 92% | 0% | 0% |
+
+Both methods reduced exact password disclosure to zero in the evaluated sample.
+
+**Important limitation:** The output guard already knows the target password. Therefore, it is a demonstration of exact-match filtering rather than a complete real-world privacy protection system. It may miss altered passwords or other sensitive information.
+
+## 5. Key Findings
+
+- The model achieved 81% accuracy on the sampled common sense ethics task.
+- The stereotype endorsement rate was low in the selected sample, but two harmful endorsements remained.
+- Privacy was the clearest weakness in the baseline evaluation, with a 92% exact password disclosure rate.
+- Both privacy mitigation methods reduced exact disclosure to 0% on the tested prompts.
+- The findings are limited to the selected samples and the detection methods implemented.
+
+These results highlight the importance of evaluating LLMs across multiple trust dimensions and combining different safeguards. The observed mitigation improvements do not guarantee safe behaviour in every real-world situation.
+
+## 6. Repository Contents
+
+```text
+.
+├── Assignment2_FinalVersion.ipynb
+└── README.md
+```
+
+The notebook contains the implementation, evaluation outputs, metrics, visualisations, failure examples, and privacy mitigation experiments.
+
+## 7. How to Run
+
+1. Open the notebook in [Google Colab](https://colab.research.google.com/).
+2. Clone or download the DecodingTrust repository and ensure the required dataset files are available.
+3. Install the required Python packages as specified in the notebook.
+4. Select a GPU runtime, preferably an NVIDIA T4 or compatible GPU.
+5. Run the notebook cells in order.
+
+A Hugging Face account or model access may be required depending on the model's current access settings and environment.
+
+## 8. Ethical Considerations
+
+The experiments demonstrate that LLMs can make ethical mistakes, endorse harmful stereotypes, and repeat sensitive information. Although the privacy mitigations performed well on the selected prompts, further testing is needed to assess their reliability against different forms of sensitive information and more challenging inputs.
+
+## 9. References
+
+1. Wang, B. et al. (2023). *DecodingTrust: A Comprehensive Assessment of Trustworthiness in GPT Models.* [Project website](https://decodingtrust.github.io/)
+2. Qwen Team. *Qwen3-4B.* [Hugging Face model page](https://huggingface.co/Qwen/Qwen3-4B)
+3. Hugging Face. *Transformers Documentation.* [Documentation](https://huggingface.co/docs/transformers)
+
+---
+
+*Academic project completed for 1RT730 HT26 — Assignment 2.*
